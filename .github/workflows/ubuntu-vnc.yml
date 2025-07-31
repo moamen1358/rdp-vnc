@@ -1,4 +1,4 @@
-name: Ubuntu Desktop with noVNC and Tunnel
+name: Ubuntu Desktop with noVNC and localtunnel
 
 on:
   workflow_dispatch:
@@ -12,7 +12,7 @@ jobs:
       run: |
         sudo apt update
         sudo apt install -y xfce4 xfce4-goodies tightvncserver git curl wget openssh-client
-        sudo apt install -y python3 python3-pip
+        sudo apt install -y python3 python3-pip nodejs npm
         pip3 install websockify
 
     - name: Setup VNC server and noVNC
@@ -35,18 +35,21 @@ jobs:
 
     - name: Run noVNC server
       run: |
-        nohup ~/noVNC/utils/launch.sh --vnc localhost:5901 --listen 6080 &
+        nohup ~/noVNC/utils/launch.sh --vnc localhost:5901 --listen 6080 > novnc.log 2>&1 &
 
-    - name: Create tunnel with serveo.net
+    - name: Install localtunnel
+      run: npm install -g localtunnel
+
+    - name: Create localtunnel to noVNC
       run: |
-        nohup ssh -o StrictHostKeyChecking=no -R 80:localhost:6080 serveo.net &
+        nohup lt --port 6080 --subdomain ubuntu-desktop-demo > lt.log 2>&1 &
         sleep 10
-        echo "🚀 Tunnel should be up! Check logs below for the public URL."
-        ps aux | grep ssh
+        cat lt.log
 
     - name: Show connection info
       run: |
         echo "-------------------------------------------"
         echo "🔑 VNC password: 123456"
-        echo "🌐 Open the public URL from the previous step in your browser"
+        echo "🌐 Look above in logs for your LocalTunnel URL (e.g. https://ubuntu-desktop-demo.loca.lt)"
+        echo "👉 Open it in your browser to access Ubuntu Desktop"
         echo "-------------------------------------------"
